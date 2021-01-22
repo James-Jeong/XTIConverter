@@ -117,6 +117,7 @@ if sections is None or len(sections) == 0:
 totalData = []
 for section in sections:
 	# 1] Get section
+	section = str(section).strip()
 	print("- [ " + section + " ]")
 	options = config.options(section)
 	if options is None or len(options) == 0:
