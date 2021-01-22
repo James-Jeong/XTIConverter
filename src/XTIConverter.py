@@ -33,25 +33,39 @@ if len(sys.argv) == 2:
 		sys.exit()
 
 	xlsxPath = converterConfig.get("PATH", "XLSX_PATH")
-	if xlsxPath is None:
+	if xlsxPath is None or len(xlsxPath) == 0:
 		print("! Fail to load the option \"XLSX_PATH\" in the section \"PATH\". (name=" + converterConfigPath + ")\n")
 		sys.exit()
 
 	iniPath = converterConfig.get("PATH", "INI_PATH")
-	if iniPath is None:
+	if iniPath is None or len(iniPath) == 0:
 		print("! Fail to load the option \"INI_PATH\" in the section \"PATH\". (name=" + converterConfigPath + ")\n")
 		sys.exit()
 
 	sheetName = converterConfig.get("XLSX", "SHEET_NAME")
-	if sheetName is None:
+	if sheetName is None or len(sheetName) == 0:
 		print("! Fail to load the option \"SHEET_NAME\" in the section \"XLSX\". (name=" + converterConfigPath + ")\n")
 		sys.exit()
 
 # 1-2) Parameter mode
 elif len(sys.argv) == 4:
+	print("\n@ Parameter mode")
+	print("- Loading parameters...")
+
 	xlsxPath = sys.argv[1]
+	if len(xlsxPath) == 0:
+		print("! Fail to load the xslx path.\n")
+		sys.exit()
+
 	sheetName = sys.argv[2]
+	if len(sheetName) == 0:
+		print("! Fail to load the sheet name.\n")
+		sys.exit()
+
 	iniPath = sys.argv[3]
+	if len(iniPath) == 0:
+		print("! Fail to load the ini path.\n")
+		sys.exit()
 else:
 	print("\n! Parameter error.")
 	print("argv[0]: XTIConverter.py\n")
