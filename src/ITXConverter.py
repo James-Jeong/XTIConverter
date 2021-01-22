@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-# XTIConverter.py
+# ITXConverter.py
 # author: jamesj
 
 import os
 import sys
-from openpyxl import load_workbook
+from openpyxl import Workbook
 import configparser
 
 # ----------------------------------------------------------------------------------------- #
 # 1) Get Parameters
+iniPath = None
 xlsxPath = None
 sheetName = None
-iniPath = None
 
 # 1-1) Config mode
 if len(sys.argv) == 2:
@@ -25,7 +25,7 @@ if len(sys.argv) == 2:
 
 	converterConfig = configparser.ConfigParser()
 	converterConfig.optionxform = lambda option: option # Preserve case for letters
-	converterConfig.read(converterConfigPath)
+	converterConfig.read(converterConfigPath, encoding="utf8")
 	
 	if not converterConfig.has_section("PATH"):
 		print("! Fail to load the section \"PATH\". (name=" + converterConfigPath + ")\n")
@@ -54,117 +54,109 @@ elif len(sys.argv) == 4:
 	print("\n@ Parameter mode")
 	print("- Loading parameters...")
 
-	xlsxPath = sys.argv[1]
-	if len(xlsxPath) == 0:
-		print("! Fail to load the xslx path.\n")
-		sys.exit()
-
-	sheetName = sys.argv[2]
-	if len(sheetName) == 0:
-		print("! Fail to load the sheet name.\n")
-		sys.exit()
-
-	iniPath = sys.argv[3]
+	iniPath = sys.argv[1]
 	if len(iniPath) == 0:
 		print("! Fail to load the ini path.\n")
 		sys.exit()
 
+	xlsxPath = sys.argv[2]
+	if len(xlsxPath) == 0:
+		print("! Fail to load the xlsx path.\n")
+		sys.exit()
+
+	sheetName = sys.argv[3]
+	if len(sheetName) == 0:
+		print("! Fail to load the sheet name.\n")
+		sys.exit()
+
 else:
 	print("\n! Parameter error.")
-	print("argv[0]: XTIConverter.py\n")
+	print("argv[0]: ITXConverter.py\n")
 	print("1) Config mode")
 	print("argv[1]: {config path}\n")
 	print("2) Parameter mode")
-	print("argv[1]: {xlsx path}")
+	print("argv[1]: {ini path}")
 	print("argv[2]: {xlsx sheet name}")
-	print("argv[3]: {ini path}\n")
+	print("argv[3]: {xlsx path}\n")
 	sys.exit()
 
-print("\n@ XLSX Path: [ " + xlsxPath + " ]")
+print("\n@ INI Path: [ " + iniPath + " ]")
+print("@ XLSX Path: [ " + xlsxPath + " ]")
 print("@ Sheet Name: [ " + sheetName + " ]")
-print("@ INI Path: [ " + iniPath + " ]")
+
+# 1-3) Check file extenstion
+iniName, iniExtension = os.path.splitext(iniPath)
+if iniExtension != ".ini":
+	print("! INI File type is wrong. (ext=" + iniExtension + ")\n")
+	sys.exit()
 
 xlsxName, xlsxExtension = os.path.splitext(xlsxPath)
 if xlsxExtension != ".xlsx":
-        print("! XLSX File type is wrong. (ext=" + xlsxExtension + ")\n")
-        sys.exit()
-
-iniName, iniExtension = os.path.splitext(iniPath)
-if iniExtension != ".ini":
-        print("! INI File type is wrong. (ext=" + iniExtension + ")\n")
-        sys.exit()
-
-# ----------------------------------------------------------------------------------------- #
-# 2) Check xlsx path
-if not os.path.exists(xlsxPath) or not os.path.isfile(xlsxPath):
-	print("! Unknown XLSX Path.\n")
+	print("! XLSX File type is wrong. (ext=" + xlsxExtension + ")\n")
 	sys.exit()
 
 # ----------------------------------------------------------------------------------------- #
-# 3) Load xlsx
-load_wb = load_workbook(xlsxPath, data_only = True)
-load_ws = load_wb[sheetName]
-
-# 3-1) Parsing
-print("\n- Loading xlsx...\n")
-all_values = []
-for row in load_ws.rows:
-	row_value = []
-	for cell in row:
-		if cell.value is None:
-			break
-		row_value.append(str(cell.value).strip())
-	all_values.append(row_value)
-
-# 3-2) Check result
-if len(all_values) <= 1:
-	print("! Fail to load. The file is empty.\n")
+# 2) Check ini path
+if not os.path.exists(iniPath) or not os.path.isfile(iniPath):
+	print("! Unknown INI Path.\n")
 	sys.exit()
-else:
-	for row in all_values:
-		if len(row) == 0:
-			print()
-			continue
-		if len(row) == 1:
-			print("- [" + row[0] + "]")
-		elif len(row) == 2:
-			print("	- " + row[0] + ": " + row[1])
-		else:
-			print(row)
-	print("\n- Success to load.")
 
 # ----------------------------------------------------------------------------------------- #
-# 4) Make & Write ini file
+# 3) Load ini file
+print("\n- Loading ini...\n")
 config = configparser.ConfigParser()
 config.optionxform = lambda option: option # Preserve case for letters
+config.read(iniPath, encoding="utf8")
 
-# 4-1) Parsing
-curSection = None
-for row in all_values:
-	row_value = []
-	for cell in row:
-		row_value.append(cell)
-	# 1. Row 에 section 이 있는 경우
-	if len(row_value) == 1:
-		curSection = row_value[0]
-		config.add_section(curSection)
-	# 2. Row 에 key, value 가 있는 경우
-	elif len(row_value) == 2 and curSection is not None:
-		config.set(curSection, row_value[0], row_value[1])
-	# 3. Row 가 비었거나 ini 형식과 일치하지 않는 경우
-	else:
-		curSection = None
-
-if curSection is None:
+# 3-1) Reading
+sections = config.sections()
+if sections is None or len(sections) == 0:
 	print("! Fail. Not found any section.\n")
 	sys.exit()
 
-# 4-2) Writing
-with open(iniPath, 'w', encoding='utf8') as configfile:
-	config.write(configfile)
+totalData = []
+for section in sections:
+	# 1] Get section
+	print("- [ " + section + " ]")
+	options = config.options(section)
+	if options is None or len(options) == 0:
+		continue
+
+	# 2] Get key & value
+	data = []
+	data.append(section)
+	for option in options:
+		keyValues = []
+		key = str(option).strip()
+		value = str(config.get(section, option)).strip()
+		keyValues.append(key)
+		keyValues.append(value)
+		data.append(keyValues)
+		print("	- " + key + ": " + value)
+
+	# 3] Add section & section's data
+	totalData.append(data)
+
+# ----------------------------------------------------------------------------------------- #
+# 4) Make & Write xlsx
+wb = Workbook()
+sheet = wb.active
+sheet.title = sheetName
+
+# 4-1) Writing
+rowId = 1
+for data in totalData:
+	sheet.cell(row=rowId, column=1).value = data[0]
+	rowId += 1
+	for datum in data[1:]:
+		sheet.cell(row=rowId, column=1).value = datum[0]
+		sheet.cell(row=rowId, column=2).value = datum[1]
+		rowId += 1
+
+wb.save(filename=xlsxPath)
 
 # 4-3) Check result
-if os.path.exists(iniPath):
+if os.path.exists(xlsxPath) and os.path.isfile(xlsxPath):
 	print("\n@ Done.\n")
 else:
 	print("\n! Fail.\n")
