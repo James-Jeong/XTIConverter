@@ -13,7 +13,7 @@ iniPath = None
 
 # 1-1) Config mode
 if len(sys.argv) == 2:
-	print("\n@ Cconfig mode")
+	print("\n@ Config mode")
 	print("- Loading config...")
 
 	converterConfigPath = sys.argv[1]
@@ -54,7 +54,7 @@ elif len(sys.argv) == 4:
 	iniPath = sys.argv[3]
 else:
 	print("\n! Parameter error.")
-	print("argv[0]: xmlToINI.py\n")
+	print("argv[0]: XTIConverter.py\n")
 	print("1) Config mode")
 	print("argv[1]: {config path}\n")
 	print("2) Parameter mode")
@@ -63,8 +63,9 @@ else:
 	print("argv[3]: {ini path}\n")
 	sys.exit()
 
-print("\n@ XLSX Path: [ " + xlsxPath  + " ]")
-print("@ INI Path: [ " + iniPath  + " ]")
+print("\n@ XLSX Path: [ " + xlsxPath + " ]")
+print("@ INI Path: [ " + iniPath + " ]")
+print("@ Sheet Name: [ " + sheetName + " ]")
 
 # ----------------------------------------------------------------------------------------- #
 # 2) Check xlsx path
