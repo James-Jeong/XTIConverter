@@ -19,10 +19,6 @@ if __name__ == '__main__':
 # 1-1) Check program mode
 	xlsxPath, sheetName, iniPath = checkMode(sys.argv)
 
-	print("\n@ INI Path: [ " + iniPath + " ]")
-	print("@ XLSX Path: [ " + xlsxPath + " ]")
-	print("@ Sheet Name: [ " + sheetName + " ]")
-
 # ----------------------------------------------------------------------------------------- #
 # 2) Check ini path
 	checkIni(iniPath)

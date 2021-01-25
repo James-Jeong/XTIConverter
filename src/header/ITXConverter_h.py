@@ -7,6 +7,12 @@ import sys
 from openpyxl import Workbook
 import configparser
 
+from .Logger_h import Logger
+
+# ----------------------------------------------------------------------------------------- #
+# PREDEFINES
+log = None
+
 # ----------------------------------------------------------------------------------------- #
 # FUNCTIONS
 
@@ -20,6 +26,7 @@ def exitProgram():
 # 1. Config mode
 # 2. Paramter mode
 def checkMode(argv):
+	global log
 	xlsxPath = None
 	sheetName = None
 	iniPath = None
@@ -27,12 +34,8 @@ def checkMode(argv):
 
 	# 1) Config mode
 	if argvLen == 2:
-		print("\n@ Config mode")
-		print("- Loading config...")
-
 		converterConfigPath = argv[1]
 		if not os.path.exists(converterConfigPath) or not os.path.isfile(converterConfigPath):
-			print("! Fail to load the program's config file. (name=" + converterConfigPath + ")\n")
 			exitProgram()
 
 		converterConfig = configparser.ConfigParser()
@@ -40,56 +43,43 @@ def checkMode(argv):
 		converterConfig.read(converterConfigPath, encoding="utf8")
 		
 		if not converterConfig.has_section("PATH"):
-			print("! Fail to load the section \"PATH\". (name=" + converterConfigPath + ")\n")
 			exitProgram()
 		if not converterConfig.has_section("XLSX"):
-			print("! Fail to load the section \"XLSX\". (name=" + converterConfigPath + ")\n")
 			exitProgram()
+
+		logLevel = converterConfig.get("LOG", "LEVEL")
+		if logLevel is None or len(logLevel) == 0:
+			exitProgram()
+
+		log = Logger("logger", logLevel, "%(asctime)s [%(levelname)s] %(message)s", "[ %Y-%m-%d %H:%M:%S ]")
+		log = log.getStreamHandler()
+
+
 
 		xlsxPath = converterConfig.get("PATH", "XLSX_PATH")
 		if xlsxPath is None or len(xlsxPath) == 0:
-			print("! Fail to load the option \"XLSX_PATH\" in the section \"PATH\". (name=" + converterConfigPath + ")\n")
+			log.warn("! Fail to load the option \"XLSX_PATH\" in the section \"PATH\". (configPath={}".format(converterConfigPath))
 			exitProgram()
 
 		iniPath = converterConfig.get("PATH", "INI_PATH")
 		if iniPath is None or len(iniPath) == 0:
-			print("! Fail to load the option \"INI_PATH\" in the section \"PATH\". (name=" + converterConfigPath + ")\n")
+			log.warn("! Fail to load the option \"INI_PATH\" in the section \"PATH\". (configPath={}".format(converterConfigPath))
 			exitProgram()
 
 		sheetName = converterConfig.get("XLSX", "SHEET_NAME")
 		if sheetName is None or len(sheetName) == 0:
-			print("! Fail to load the option \"SHEET_NAME\" in the section \"XLSX\". (name=" + converterConfigPath + ")\n")
+			log.warn("! Fail to load the option \"SHEET_NAME\" in the section \"PATH\". (configPath={}".format(converterConfigPath))
 			exitProgram()
 
-	# 2) Parameter mode
-	elif argvLen == 4:
-		print("\n@ Parameter mode")
-		print("- Loading parameters...")
-
-		iniPath = argv[1]
-		if len(iniPath) == 0:
-			print("! Fail to load the ini path.\n")
-			exitProgram()
-
-		xlsxPath = argv[2]
-		if len(xlsxPath) == 0:
-			print("! Fail to load the xlsx path.\n")
-			exitProgram()
-
-		sheetName = argv[3]
-		if len(sheetName) == 0:
-			print("! Fail to load the sheet name.\n")
-			exitProgram()
-
+		log.info("- INI Path: [ {} ]".format(iniPath))
+		log.info("- XLSX Path: [ {} ]".format(xlsxPath))
+		log.info("- Sheet Name: [ {} ]".format(sheetName))
+		log.info("- Log level: [ {} ]".format(logLevel))
+		log.info("Loading config...(OK)")
 	else:
-		print("\n! Parameter error.")
-		print("argv[0]: ITXConverter.py\n")
-		print("1) Config mode")
-		print("argv[1]: {config path}\n")
-		print("2) Parameter mode")
-		print("argv[1]: {ini path}")
-		print("argv[2]: {xlsx sheet name}")
-		print("argv[3]: {xlsx path}\n")
+		log.info("Parameter error.")
+		log.info("	argv[0]: ITXConverter.py")
+		log.info("	argv[1]: {config path}")
 		exitProgram()
 
 	return xlsxPath, sheetName, iniPath
@@ -99,39 +89,38 @@ def checkMode(argv):
 def checkXlsx(xlsxPath):
 	xlsxName, xlsxExtension = os.path.splitext(xlsxPath)
 	if xlsxExtension != ".xlsx":
-	        print("! XLSX File type is wrong. (ext=" + xlsxExtension + ")\n")
+	        log.warn("XLSX File type is wrong. (ext={}".format(xlsxExtension))
         	exitProgram()
 
 # @fn checkIni(iniPath)
 # @brief 지정한 INI 경로 존재 여부와 파일의 확장자를 검사하는 함수
 def checkIni(iniPath):
 	if not os.path.exists(iniPath) or not os.path.isfile(iniPath):
-		print("! Unknown INI Path.\n")
+		log.warn("Unknown INI Path.")
 		exitProgram()
 
 	iniName, iniExtension = os.path.splitext(iniPath)
 	if iniExtension != ".ini":
-	        print("! INI File type is wrong. (ext=" + iniExtension + ")\n")
+	        log.warn("INI File type is wrong. (ext={}".format(iniExtension))
 	        exitProgram()
 
 # @fn loadIni(iniPath)
 # @brief 지정한 INI 파일 로드하여 저장된 값들을 반환하는 함수
 def loadIni(iniPath):
-	print("\n- Loading ini...\n")
 	config = configparser.ConfigParser()
 	config.optionxform = lambda option: option # Preserve case for letters
 	config.read(iniPath, encoding="utf8")
 
 	sections = config.sections()
 	if sections is None or len(sections) == 0:
-		print("! Fail. Not found any section.\n")
+		log.warn("Loading ini...(FAIL): Not found any section.")
 		exitProgram()
 
 	totalData = []
 	for section in sections:
 		# 1] Get section
 		section = str(section).strip()
-		print("- [ " + section + " ]")
+		log.debug("[ {} ]".format(section))
 		options = config.options(section)
 		if options is None or len(options) == 0:
 			continue
@@ -146,11 +135,12 @@ def loadIni(iniPath):
 			keyValues.append(key)
 			keyValues.append(value)
 			data.append(keyValues)
-			print("	- " + key + ": " + value)
+			log.debug("	- {}: {}".format(key, value))
 
 		# 3] Add section & section's data
 		totalData.append(data)
 
+	log.info("Loading ini...(OK)")
 	return totalData
 
 # @fn writeXlsx(xlsxPath, sheetName, totalData)
@@ -172,8 +162,7 @@ def writeXlsx(xlsxPath, sheetName, totalData):
 	wb.save(filename=xlsxPath)
 	
 	if os.path.exists(xlsxPath) and os.path.isfile(xlsxPath):
-		print("\n@ Done.\n")
+		log.info("Writing xlsx...(OK)")
 	else:
-		print("\n! Fail.\n")
-
+		log.warn("Writing xlsx...(FAIL): Not found the xlsx file.")
 

@@ -5,25 +5,23 @@
 import logging
 
 class Logger:
-	INFO_LEVEL = logging.INFO
-	DEBUG_LEVEL = logging.DEBUG
-	WARNING_LEVEL = logging.warning
+	def __init__(self, name, level, msgFmt, dateFmt):
+		self.log = logging.getLogger(name)
+		self.log.propagate = True
+		self.formatter = logging.Formatter(msgFmt, dateFmt)
+		self.levels = {
+			"DEBUG" : logging.DEBUG,
+			"INFO" : logging.INFO,
+			"WARNING" : logging.WARNING,
+			"ERROR" : logging.ERROR,
+			"CRITICAL" : logging.CRITICAL
+		}
+		self.log.setLevel(level=self.levels[level])
 
-	logger = logging.getLogger(__name__)
-
-	def logInfo(self, msg):
-		self.logger.info(msg)
-
-	def logDebug(self, msg):
-		self.logger.debug(msg)
-
-	def logWarning(self, msg):
-		self.logger.warning(msg)
-
-	def setLogging(self, level, msgFmt, dateFmt):
-		formatter = logging.Formatter(msgFmt, dateFmt)
+	def getStreamHandler(self):
 		streamHandler = logging.StreamHandler()
-		streamHandler.setLevel(level)
-		streamHandler.setFormatter(formatter)
-		self.logger.addHandler(streamHandler)
+		#streamHandler.setLevel(level=self.levels[level])
+		streamHandler.setFormatter(self.formatter)
+		self.log.addHandler(streamHandler)
+		return self.log
 
