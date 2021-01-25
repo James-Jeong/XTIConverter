@@ -8,7 +8,7 @@ from header.ITXConverter_h import *
 # MAIN FUNCTION
 
 # @fn main
-# @brief XSLX To File Converter main function
+# @brief INI To XSLX File Converter main function
 if __name__ == '__main__':
 # ----------------------------------------------------------------------------------------- #
 # 1) Get Parameters
