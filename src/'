@@ -31,8 +31,8 @@ def checkMode(argv):
 
 	# 1) Config mode
 	if argvLen == 2:
-		log.logInfo("\n@ Config mode")
-		log.logInfo("- Loading config...")
+		log.log.logInfo("\n@ Config mode")
+		log.log.logInfo("- Loading config...")
 
 		converterConfigPath = argv[1]
 		if not os.path.exists(converterConfigPath) or not os.path.isfile(converterConfigPath):

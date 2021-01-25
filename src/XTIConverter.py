@@ -11,6 +11,10 @@ from header.XTIConverter_h import *
 # @brief XSLX To INI File Converter main function
 if __name__ == '__main__':
 # ----------------------------------------------------------------------------------------- #
+# 0) Set logging
+	log.setLogging(Logger.INFO_LEVEL, "%(asctime)s:%(module)s:%(levelname)s:%(message)s", "%Y-%m-%d %H:%M:%S")
+
+# ----------------------------------------------------------------------------------------- #
 # 1) Get Parameters
 	xlsxPath = None
 	sheetName = None
@@ -19,9 +23,9 @@ if __name__ == '__main__':
 # 1-1) Check program mode
 	xlsxPath, sheetName, iniPath = checkMode(sys.argv)
 
-	print("\n@ XLSX Path: [ " + xlsxPath + " ]")
-	print("@ Sheet Name: [ " + sheetName + " ]")
-	print("@ INI Path: [ " + iniPath + " ]")
+	log.logInfo("@ XLSX Path: [ " + xlsxPath + " ]")
+	log.logInfo("@ Sheet Name: [ " + sheetName + " ]")
+	log.logInfo("@ INI Path: [ " + iniPath + " ]")
 
 # ----------------------------------------------------------------------------------------- #
 # 2) Check xlsx path & ini path
