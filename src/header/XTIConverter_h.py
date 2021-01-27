@@ -23,8 +23,6 @@ def exitProgram():
 
 # @fn checkMode(argv)
 # @brief 프로그램 모드를 확인하는 함수
-# 1. Config mode
-# 2. Paramter mode
 def checkMode(argv):
 	global log
 	xlsxPath = None
@@ -32,7 +30,6 @@ def checkMode(argv):
 	iniPath = None
 	argvLen = len(argv)
 
-	# 1) Config mode
 	if argvLen == 2:
 		converterConfigPath = argv[1]
 		if not os.path.exists(converterConfigPath) or not os.path.isfile(converterConfigPath):
@@ -42,28 +39,39 @@ def checkMode(argv):
 		converterConfig.optionxform = lambda option: option # Preserve case for letters
 		converterConfig.read(converterConfigPath)
 	
+		# PATH section 이 없으면 종료	
 		if not converterConfig.has_section("PATH"):
 			exitProgram()
+		# XLSX section 이 없으면 종료	
 		if not converterConfig.has_section("XLSX"):
 			exitProgram()
+		# LOG section 이 없으면 종료	
+		if not converterConfig.has_section("LOG"):
+			exitProgram()
 
+		# LOG section 에서 LEVEL key 의 value 를 조회
 		logLevel = converterConfig.get("LOG", "LEVEL")
+		# Log level 이 정의되지 않으면 종료
 		if logLevel is None or len(logLevel) == 0:
 			exitProgram()
 
+		# Log 형식 지정
 		log = Logger("logger", logLevel, "%(asctime)s [%(levelname)s] %(message)s", "[ %Y-%m-%d %H:%M:%S ]")
 		log = log.getStreamHandler()
 
+		# PATH section 에서 XLSX_PATH key 의 value 를 조회
 		xlsxPath = converterConfig.get("PATH", "XLSX_PATH")
 		if xlsxPath is None or len(xlsxPath) == 0:
 			log.info("! Fail to load the option \"XLSX_PATH\" in the section \"XLSX\". (configPath" + converterConfigPath + ")\n")
 			exitProgram()
 
+		# PATH section 에서 INI_PATH key 의 value 를 조회
 		iniPath = converterConfig.get("PATH", "INI_PATH")
 		if iniPath is None or len(iniPath) == 0:
 			log.warn("! Fail to load the option \"INI_PATH\" in the section \"PATH\". (configpath={}".format(converterConfigPath))
 			exitProgram()
 
+		# XLSX section 에서 SHEET_NAME key 의 value 를 조회
 		sheetName = converterConfig.get("XLSX", "SHEET_NAME")
 		if sheetName is None or len(sheetName) == 0:
 			log.warn("! Fail to load the option \"SHEET_NAME\" in the section \"PATH\". (configPath={}".format(converterConfigPath))
